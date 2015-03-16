@@ -41,6 +41,41 @@ Given /^the blog is set up$/ do
                 :profile_id => 1,
                 :name => 'admin',
                 :state => 'active'})
+
+  User.create!({:login => 'Hououin Kyouma',
+                :password => '1337madscientist',
+                :email => 'hououinkyouma@dmail.com',
+                :profile_id => 2,
+                :name => 'Hououin Kyouma',
+                :state => 'active'})
+
+  User.create!({:login => 'Makise Kurisu',
+                :password => 'pro1channeler',
+                :email => 'makisekurisu@dmail.com',
+                :profile_id => 2,
+                :name => 'Makise Kurisu',
+                :state => 'active'})
+
+  User.create!({:login => 'Mayuri Shiina',
+                :password => 'aaaaaaaa',
+                :email => 'tuturuu@dmail.com',
+                :profile_id => 2,
+                :name => 'Mayuri Shiina',
+                :state => 'active'})
+
+  User.create!({:login => 'Itaru Hashida',
+                :password => 'aaaaaaaa',
+                :email => 'superhacker@dmail.com',
+                :profile_id => 2,
+                :name => 'Itaru Hashida',
+                :state => 'active'})
+
+  User.create!({:login => 'Pub Lisher',
+                :password => 'aaaaaaaa',
+                :email => 'publisher@dmail.com',
+                :profile_id => 2,
+                :name => 'Pub Lisher',
+                :state => 'active'})
 end
 
 And /^I am logged into the admin panel$/ do
@@ -54,6 +89,94 @@ And /^I am logged into the admin panel$/ do
     assert page.has_content?('Login successful')
   end
 end
+
+When /^I login as (.*?)$/ do |user|
+  visit '/accounts/login'
+  fill_in 'user_login', :with => user
+  case user
+  when 'Hououin Kyouma'
+    password = '1337madscientist'
+  when 'Makise Kurisu'
+    password = 'pro1channeler'
+  else
+    password = 'aaaaaaaa'
+  end
+
+  fill_in 'user_password', :with => password
+  click_button 'Login'
+  if page.respond_to? :should
+    page.should have_content('Login successful')
+  else
+    assert page.has_content?('Login successful')
+  end
+end
+
+When /^I create an article with title "(.*?)" and content "(.*?)"$/ do |title, text|
+  visit path_to("the new article page")
+  fill_in("article_title", :with => title)
+  fill_in("article__body_and_extended_editor", :with => text)
+  click_button("Publish")
+end
+
+When /^publisher "(.*?)" creates an article with title "(.*?)" and content "(.*?)"$/ do |user, title, text|
+  step "I login as #{user}"
+  visit path_to("the new article page")
+  fill_in("article_title", :with => title)
+  fill_in("article__body_and_extended_editor", :with => text)
+  click_button("Publish")
+  visit path_to("logout page")
+end
+
+When /^publisher "(.*?)" comments on article "(.*?)" with "(.*?)"$/ do |user, title, text|
+  step "I login as #{user}"
+  visit path_to("the home page")
+  click_link(title)
+  fill_in("comment_author", :with => User.find_by_login(user).name)
+  fill_in("comment_email", :with => User.find_by_login(user).email)
+  fill_in("comment_url", :with => User.find_by_login(user).url)
+  fill_in("comment_body", :with => text)
+  click_button("comment")
+  visit path_to("logout page")
+end
+
+When /^I merge "(.*?)" with "(.*?)"$/ do |article1, article2|
+  visit 'admin/content/edit/' + Content.find_by_title(article1).id.to_s
+  fill_in("merge_with", :with => Content.find_by_title(article2).id)
+  click_button("Merge")
+end
+
+When /^I edit the article "(.*?)"$/ do |article|
+  visit 'admin/content/edit/' + Content.find_by_title(article).id.to_s
+end
+
+When /^I should see "(.*?)" or "(.*?)"$/ do |text1, text2|
+  assert (page.has_content?(text1) or page.has_content?(text2))
+end
+
+When /^I should not see both "(.*?)" and "(.*?)"$/ do |text1, text2|
+  assert (page.has_content?(text1) ^ page.has_content?(text2))
+end
+
+When /^I visit either "(.*?)" or "(.*?)"$/ do |title1, title2|
+  assert (page.has_link?(title1) or page.has_link?(title2))
+  if page.has_link?(title1)
+    click_link(title1)
+  else
+    click_link(title2)
+  end
+end
+
+Then /^the author of "(.*?)" or "(.*?)" should be "(.*?)" or "(.*?)"$/ do |t1, t2, a1, a2|
+  assert (page.has_link?(t1) or page.has_link?(t2))
+  if page.has_link?(t1)
+    author = Content.find_by_title(t1).author
+    assert (author == a1 or author == a2)
+  else
+    author = Content.find_by_title(t2).author
+    assert (author == a1 or author == a2)
+  end
+end
+
 
 # Single-line step scoper
 When /^(.*) within (.*[^:])$/ do |step, parent|

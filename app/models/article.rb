@@ -61,6 +61,13 @@ class Article < Content
 
   setting :password,                   :string, ''
 
+  def merge(other)
+    self.body = self.body + other.body
+    self.comments += other.comments
+    self.save
+    Article.destroy(other)
+  end
+
   def initialize(*args)
     super
     # Yes, this is weird - PDC

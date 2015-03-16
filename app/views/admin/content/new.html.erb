@@ -1,3 +1,9 @@
 <% @page_heading = _('New article') %>
 
 <%= render "admin/shared/edit", { :form_type => "article", :form_action => { :action => "new", :id => @article.id , :class => ('autosave')} } %>
+
+<%= 
+if current_user.admin?
+	flash[:current_id] = params[:id]
+	render :partial => "admin/content/merge"
+end %>

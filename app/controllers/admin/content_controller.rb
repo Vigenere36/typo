@@ -2,6 +2,15 @@ require 'base64'
 
 module Admin; end
 class Admin::ContentController < Admin::BaseController
+  def merge
+    if flash[:current_id] and params[:merge_with]
+      article1 = Article.find_by_id(flash[:current_id])
+      article2 = Article.find_by_id(params[:merge_with])
+      article1.merge(article2)
+    end
+    redirect_to '/admin/content'
+  end
+
   layout "administration", :except => [:show, :autosave]
 
   cache_sweeper :blog_sweeper
